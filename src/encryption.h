@@ -5,4 +5,4 @@
 
 void encryptFile(const std::string& inputFile, const std::string& outputFile);
 
-#endif
+#endif // ENCRYPTION_H
