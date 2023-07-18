@@ -1,5 +1,5 @@
-#include "encryption.h""
-#include "decryption.h""
+#include "encryption.h"
+// #include "decryption.h"
 #include <iostream>
 
 int main(int argc, char* argv[]) {
@@ -15,14 +15,14 @@ int main(int argc, char* argv[]) {
     std::string outputFile = argv[3];
 
     // Perform the corresponding operation based on the command
-    if (command == "-"+"e") {
+    if (command == "-e") {
         encryptFile(inputFile, outputFile);
         std::cout << "File encrypted successfully.\n";
     }
-    else if (command == "-"+"d") {
-        decryptFile(inputFile, outputFile);
-        std::cout << "File decrypted successfully.\n";
-    }
+    // else if (command == "-d") {
+    //     decryptFile(inputFile, outputFile);
+    //     std::cout << "File decrypted successfully.\n";
+    // }
     else {
         std::cerr << "Invalid command. Available commands: -e, -d\n";
         return 1;
