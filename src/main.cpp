@@ -1,5 +1,5 @@
-#include "encryption.h"
-#include "decryption.h"
+#include "include/encryption.h"
+#include "include/decryption.h"
 #include <iostream>
 
 int main(int argc, char* argv[]) {

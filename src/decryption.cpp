@@ -1,61 +1,34 @@
-#include "decryption.h"
 #include "file_utils.h"
 #include <iostream>
-#include <cstring>
-#include <openssl/evp.h>
+#include "cryptlib.h"
+#include <aes.h>
+#include <modes.h>
+#include <filters.h>
+#include <hex.h>
+
+using namespace CryptoPP;
 
 void decryptFile(const std::string& inputFile, const std::string& outputFile) {
-    // Read the content of the input file
+    // Read the content of the encrypted input file
     std::string ciphertext = readFile(inputFile);
 
-    // Extract the encryption key and IV from the ciphertext
-    unsigned char encryptionKey[EVP_MAX_KEY_LENGTH];
-    unsigned char iv[EVP_MAX_IV_LENGTH];
-    std::string keyAndIV = ciphertext.substr(0, EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH);
-    ciphertext = ciphertext.substr(EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH);
-    memcpy(encryptionKey, keyAndIV.data(), EVP_MAX_KEY_LENGTH);
-    memcpy(iv, keyAndIV.data() + EVP_MAX_KEY_LENGTH, EVP_MAX_IV_LENGTH);
+    // Encryption key and IV (AES-128, 16 bytes key)
+    byte encryptionKey[16] = {0x00};  // Replace with your 128-bit key (16 bytes)
+    byte iv[16] = {0x00};  // Replace with your IV
 
-    // Create an EVP_CIPHER_CTX for AES decryption
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), nullptr, encryptionKey, iv);
-    EVP_CIPHER_CTX_set_padding(ctx, 0);
+    // AES decryption in CBC mode
+    CBC_Mode<AES>::Decryption cbcDecryption(encryptionKey, AES::DEFAULT_KEYLENGTH, iv);  // Pass key and IV directly
 
-    // Determine the required output buffer size for plaintext
-    int outputSize = ciphertext.size() + EVP_CIPHER_CTX_block_size(ctx);
-    std::string plaintext(outputSize, 0);
-    int decryptedSize = 0;
+    std::string plaintext;
+    StringSource(ciphertext, true, 
+        new StreamTransformationFilter(cbcDecryption, new StringSink(plaintext))
+    );
 
-    // Decrypt the ciphertext using AES in CBC mode
-    EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(plaintext.data()), &decryptedSize,
-                      reinterpret_cast<const unsigned char*>(ciphertext.data()), ciphertext.size());
-    int finalDecryptedSize = 0;
-    EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(plaintext.data()) + decryptedSize, &finalDecryptedSize);
-    decryptedSize += finalDecryptedSize;
-
-    // Clean up the EVP_CIPHER_CTX
-    EVP_CIPHER_CTX_free(ctx);
-
-    // Resize the plaintext to the actual decrypted size
-    plaintext.resize(decryptedSize);
-
-    // Write the plaintext to the output file
+    // Write the decrypted plaintext to the output file
     bool success = writeFile(outputFile, plaintext);
-
     if (success) {
         std::cout << "File decrypted successfully.\n";
     } else {
         std::cerr << "Error writing decrypted file.\n";
     }
-}
-
-#include "decryption.h"
-
-int main() {
-    std::string inputFile = "input.txt";
-    std::string outputFile = "output.txt";
-
-    decryptFile(inputFile, outputFile);
-
-    return 0;
 }
